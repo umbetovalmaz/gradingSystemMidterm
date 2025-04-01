@@ -17,10 +17,7 @@ class Student {
         this.major = major;
     }
 
-    public String getStudentID() {
-        return studentID;
-        
-    }
+    public String getStudentID() {  return studentID;  }
 
     public void display() {
         System.out.println("Student ID: " + studentID);
