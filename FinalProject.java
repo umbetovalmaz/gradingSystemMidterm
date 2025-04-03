@@ -1,14 +1,68 @@
 import java.util.*;
 import java.io.*;
 
-// Abstract class for Person
-abstract class Person {
-    protected String name;
+// Base class for all creatures
+abstract class Creature {
+    protected String type;
+
+    public Creature(String type) {
+        this.type = type;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public abstract void makeSound();
+}
+
+// Base class for all living creatures
+abstract class LivingCreature extends Creature {
     protected int age;
 
-    public Person(String name, int age) {
-        this.name = name;
+    public LivingCreature(String type, int age) {
+        super(type);
         this.age = age;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+
+    @Override
+    public void makeSound() {
+        System.out.println("Generic living creature sound");
+    }
+}
+
+// Abstract class for Person
+abstract class Person extends LivingCreature {
+    protected String name;
+
+    public Person(String name, int age) {
+        super("Human", age);
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public void makeSound() {
+        System.out.println("Hello!");
     }
 
     public abstract void displayInfo();
@@ -16,24 +70,16 @@ abstract class Person {
 
 // Interface for grading system
 interface GradingSystem {
-    String calculateGrade(double marks);
+    String calculateGrade(double averageMarks);
 }
 
 // Base Student class
 class Student extends Person implements GradingSystem, Serializable {
     private String studentID;
     private String major;
-    private double marks;
+    private double[] marks;  // Store marks for 6 courses
 
-    // Default constructor for serialization
-    public Student() {
-        super("", 0);
-        this.studentID = "";
-        this.major = "";
-        this.marks = 0.0;
-    }
-
-    public Student(String studentID, String name, int age, String major, double marks) {
+    public Student(String studentID, String name, int age, String major, double[] marks) {
         super(name, age);
         this.studentID = studentID;
         this.major = major;
@@ -44,33 +90,42 @@ class Student extends Person implements GradingSystem, Serializable {
         return studentID;
     }
 
-    public double getMarks() {
+    public double[] getMarks() {
         return marks;
     }
 
-    public void setMarks(double marks) {
-        if (marks >= 0 && marks <= 100) {
-            this.marks = marks;
-        } else {
-            throw new IllegalArgumentException("Marks must be between 0 and 100");
+    public double getAverageMarks() {
+        return Arrays.stream(marks).average().orElse(0.0);
+    }
+
+    public void setMarks(double[] marks) {
+        if (marks.length != 6) {
+            throw new IllegalArgumentException("Must provide marks for 6 courses.");
         }
+        for (double mark : marks) {
+            if (mark < 0 || mark > 100) {
+                throw new IllegalArgumentException("Marks must be between 0 and 100.");
+            }
+        }
+        this.marks = marks;
     }
 
     @Override
-    public String calculateGrade(double marks) {
-        if (marks >= 90) return "A";
-        else if (marks >=87) return "B+";
-        else if (marks >=84) return "B";
-        else if (marks >= 80) return "B";
-        else if (marks >= 70) return "C";
-        else if (marks >= 60) return "D";
+    public String calculateGrade(double averageMarks) {
+        if (averageMarks >= 90) return "A";
+        else if (averageMarks >= 87) return "B+";
+        else if (averageMarks >= 84) return "B";
+        else if (averageMarks >= 80) return "B-";
+        else if (averageMarks >= 70) return "C";
+        else if (averageMarks >= 60) return "D";
         else return "F";
     }
 
     @Override
     public void displayInfo() {
-        System.out.printf("ID: %s | Name: %s | Age: %d | Major: %s | Grade: %s\n",
-                studentID, name, age, major, calculateGrade(marks));
+        double averageMarks = getAverageMarks();
+        System.out.printf("ID: %s | Name: %s | Age: %d | Major: %s | Average Marks: %.2f | Grade: %s\n",
+                studentID, name, age, major, averageMarks, calculateGrade(averageMarks));
     }
 }
 
@@ -78,13 +133,7 @@ class Student extends Person implements GradingSystem, Serializable {
 class ScholarshipStudent extends Student {
     private boolean hasScholarship;
 
-    // Default constructor for serialization
-    public ScholarshipStudent() {
-        super();
-        this.hasScholarship = false;
-    }
-
-    public ScholarshipStudent(String studentID, String name, int age, String major, double marks, boolean hasScholarship) {
+    public ScholarshipStudent(String studentID, String name, int age, String major, double[] marks, boolean hasScholarship) {
         super(studentID, name, age, major, marks);
         this.hasScholarship = hasScholarship;
     }
@@ -109,9 +158,7 @@ public class FinalProject {
             System.out.println("2. Remove Student");
             System.out.println("3. Display All Students");
             System.out.println("4. Search for a Student");
-            System.out.println("5. Save Students to File");
-            System.out.println("6. Load Students from File");
-            System.out.println("7. Exit");
+            System.out.println("5. Exit");
             System.out.print("Enter your choice: ");
 
             while (!scanner.hasNextInt()) {
@@ -135,18 +182,12 @@ public class FinalProject {
                     searchStudent(scanner);
                     break;
                 case 5:
-                    saveToFile();
-                    break;
-                case 6:
-                    loadFromFile();
-                    break;
-                case 7:
                     System.out.println("Exiting the program. Goodbye!");
                     break;
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        } while (choice != 7);
+        } while (choice != 5);
         scanner.close();
     }
 
@@ -154,21 +195,16 @@ public class FinalProject {
         try {
             System.out.print("Enter Student ID: ");
             String id = scanner.nextLine();
-            
+
             System.out.print("Enter Name: ");
             String name = "";
-            boolean validName = false;
-            while (!validName) {
-                name = scanner.nextLine().trim();
-                if (name.isEmpty()) {
+            while (name.trim().isEmpty()) {
+                name = scanner.nextLine();
+                if (name.trim().isEmpty()) {
                     System.out.println("Name cannot be empty. Please enter a valid name:");
-                } else if (!name.matches("^[a-zA-Z\\s]+$")) {
-                    System.out.println("Name can only contain letters and spaces. Please enter a valid name:");
-                } else {
-                    validName = true;
                 }
             }
-            
+
             System.out.print("Enter Age: ");
             int age = -1;
             while (age <= 0) {
@@ -183,7 +219,7 @@ public class FinalProject {
                 }
             }
             scanner.nextLine(); // Clear the newline after the number
-            
+
             System.out.print("Enter Major: ");
             String major = "";
             while (major.trim().isEmpty()) {
@@ -192,22 +228,26 @@ public class FinalProject {
                     System.out.println("Major cannot be empty. Please enter a valid major:");
                 }
             }
-            
-            System.out.print("Enter Marks: ");
-            double marks = -1;
-            while (marks < 0 || marks > 100) {
-                try {
-                    marks = scanner.nextDouble();
-                    if (marks < 0 || marks > 100) {
-                        System.out.println("Marks must be between 0 and 100. Please try again:");
+
+            double[] marks = new double[6];
+            for (int i = 0; i < 6; i++) {
+                System.out.printf("Enter Marks for Course %d: ", i + 1);
+                while (true) {
+                    try {
+                        marks[i] = scanner.nextDouble();
+                        if (marks[i] < 0 || marks[i] > 100) {
+                            System.out.println("Marks must be between 0 and 100. Please try again:");
+                        } else {
+                            break;
+                        }
+                    } catch (InputMismatchException e) {
+                        System.out.println("Invalid input. Please enter a number between 0 and 100:");
+                        scanner.nextLine(); // Clear the invalid input
                     }
-                } catch (InputMismatchException e) {
-                    System.out.println("Invalid input. Please enter a number between 0 and 100:");
-                    scanner.nextLine(); // Clear the invalid input
                 }
             }
             scanner.nextLine(); // Clear the newline after the number
-            
+
             System.out.print("Scholarship (true/false): ");
             boolean scholarship = false;
             boolean validInput = false;
@@ -262,30 +302,6 @@ public class FinalProject {
         }
         if (!found) {
             System.out.println("Student not found.");
-        }
-    }
-    
-
-    private static void saveToFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("students.txt"))) {
-            oos.writeObject(students);
-            System.out.println("Student data saved successfully.");
-        } catch (IOException e) {
-            System.out.println("Error saving student data: " + e.getMessage());
-        }
-    }
-
-    private static void loadFromFile() {
-        File file = new File("students.txt");
-        if (!file.exists()) {
-            System.out.println("No saved data found.");
-            return;
-        }
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            students = (List<Student>) ois.readObject();
-            System.out.println("Student data loaded successfully.");
-        } catch (IOException | ClassNotFoundException e) {
-            System.out.println("Error loading student data: " + e.getMessage());
         }
     }
 }
