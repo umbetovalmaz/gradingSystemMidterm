@@ -236,7 +236,7 @@ public class FinalProject {
                     try {
                         marks[i] = scanner.nextDouble();
                         if (marks[i] < 0 || marks[i] > 100) {
-                            System.out.println("Marks must be between 0 and 100. Please try again:");
+                            System.out.println("Marks must be between 1 and 100. Please try again:");
                         } else {
                             break;
                         }
