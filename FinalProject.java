@@ -147,10 +147,16 @@ class ScholarshipStudent extends Student {
 
 public class FinalProject {
     private static List<Student> students = new ArrayList<>();
+    private static PASSWORD = "ParvinAka";
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int choice;
+
+        if (!login(scanner)) {
+            System.out.println("Access denied. Exiting program.");
+            return;
+        }
 
         do {
             System.out.println("\nStudent Management System");
@@ -287,6 +293,12 @@ public class FinalProject {
         } else {
             students.forEach(Student::displayInfo);
         }
+    }
+
+    private static boolean login(Scanner scanner) {
+        System.out.print("Enter password to access the system: ");
+        String inputPassword = scanner.nextLine();
+        return PASSWORD.equals(inputPassword);
     }
 
     private static void searchStudent(Scanner scanner) {
