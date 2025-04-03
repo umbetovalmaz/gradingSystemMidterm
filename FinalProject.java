@@ -25,6 +25,14 @@ class Student extends Person implements GradingSystem, Serializable {
     private String major;
     private double marks;
 
+    // Default constructor for serialization
+    public Student() {
+        super("", 0);
+        this.studentID = "";
+        this.major = "";
+        this.marks = 0.0;
+    }
+
     public Student(String studentID, String name, int age, String major, double marks) {
         super(name, age);
         this.studentID = studentID;
@@ -69,6 +77,12 @@ class Student extends Person implements GradingSystem, Serializable {
 // Specialized subclass with scholarship status
 class ScholarshipStudent extends Student {
     private boolean hasScholarship;
+
+    // Default constructor for serialization
+    public ScholarshipStudent() {
+        super();
+        this.hasScholarship = false;
+    }
 
     public ScholarshipStudent(String studentID, String name, int age, String major, double marks, boolean hasScholarship) {
         super(studentID, name, age, major, marks);
@@ -143,10 +157,15 @@ public class FinalProject {
             
             System.out.print("Enter Name: ");
             String name = "";
-            while (name.trim().isEmpty()) {
-                name = scanner.nextLine();
-                if (name.trim().isEmpty()) {
+            boolean validName = false;
+            while (!validName) {
+                name = scanner.nextLine().trim();
+                if (name.isEmpty()) {
                     System.out.println("Name cannot be empty. Please enter a valid name:");
+                } else if (!name.matches("^[a-zA-Z\\s]+$")) {
+                    System.out.println("Name can only contain letters and spaces. Please enter a valid name:");
+                } else {
+                    validName = true;
                 }
             }
             
@@ -248,7 +267,7 @@ public class FinalProject {
     
 
     private static void saveToFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("students.dat"))) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("students.txt"))) {
             oos.writeObject(students);
             System.out.println("Student data saved successfully.");
         } catch (IOException e) {
@@ -257,7 +276,7 @@ public class FinalProject {
     }
 
     private static void loadFromFile() {
-        File file = new File("students.dat");
+        File file = new File("students.txt");
         if (!file.exists()) {
             System.out.println("No saved data found.");
             return;
